@@ -7,7 +7,6 @@ Flashlight for Counter-Strike 2
 
 ## Required packages:
 1. [ModSharp](https://github.com/Kxnrl/modsharp-public)
-2. [Extension GameEventManager](https://github.com/Kxnrl/modsharp-public/tree/master/Sharp.Extensions/GameEventManager/src)
 
 ## Installation:
 0. Install GameEventManager to `sharp/shared` folger

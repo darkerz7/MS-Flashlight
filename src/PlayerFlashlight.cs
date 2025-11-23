@@ -1,5 +1,6 @@
 ﻿using Sharp.Shared.GameEntities;
 using Sharp.Shared.Types;
+using System.Globalization;
 
 namespace MS_Flashlight
 {
@@ -46,6 +47,9 @@ namespace MS_Flashlight
         {
             if (Player == null || !Player.IsValid()) return;
             //RemoveFlashlight();
+            var pawn = Player.GetPlayerPawn()!;
+            var vecOrigin = pawn.GetAbsOrigin() with { Z = pawn.GetAbsOrigin().Z + pawn.ViewOffset.Z + 0.03f };
+            var vecAngles = pawn.GetEyeAngles();
             var kv = new Dictionary<string, KeyValuesVariantValueItem>
             {
                 {"directlight", 3},
@@ -54,16 +58,12 @@ namespace MS_Flashlight
                 {"color", $"{ColorFL.R} {ColorFL.G} {ColorFL.B} {ColorFL.A}"},
                 {"colortemperature", 6500},
                 {"brightness", 1f},
-                {"range", 5000f}
+                {"range", 5000f},
+                {"origin", $"{vecOrigin.X.ToString("F6", CultureInfo.InvariantCulture)} {vecOrigin.Y.ToString("F6", CultureInfo.InvariantCulture)} {vecOrigin.Z.ToString("F6", CultureInfo.InvariantCulture)}"},
+                {"angles", $"{vecAngles.X.ToString("F6", CultureInfo.InvariantCulture)} {vecAngles.Y.ToString("F6", CultureInfo.InvariantCulture)} {vecAngles.Z.ToString("F6", CultureInfo.InvariantCulture)}"}
             };
             if (Flashlight._entityManager!.SpawnEntitySync<IBaseEntity>("light_omni2", kv) is { } entity)
             {
-                var pawn = Player.GetPlayerPawn()!;
-                Vector vecOrigin = pawn.GetAbsOrigin() with { Z = pawn.GetAbsOrigin().Z + pawn.ViewOffset.Z + 0.03f };
-                entity.Teleport(vecOrigin, pawn.GetEyeAngles(), pawn.GetAbsVelocity());
-
-                entity.DispatchSpawn();
-
                 entity.AcceptInput("SetParent", pawn, null, "!activator");
                 entity.AcceptInput("SetParentAttachmentMaintainOffset", pawn, null, "axis_of_intent");
 

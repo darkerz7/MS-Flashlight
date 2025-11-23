@@ -1,21 +1,19 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Sharp.Extensions.GameEventManager;
+using Sharp.Modules.LocalizerManager.Shared;
 using Sharp.Shared;
-using Sharp.Shared.Abstractions;
 using Sharp.Shared.Definition;
 using Sharp.Shared.Enums;
-using Sharp.Shared.GameEntities;
 using Sharp.Shared.HookParams;
+using Sharp.Shared.Listeners;
 using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
 using Sharp.Shared.Units;
-using Sharp.Modules.LocalizerManager.Shared;
+using System.Security.Cryptography;
 
 namespace MS_Flashlight
 {
-    public class Flashlight : IModSharpModule
+    public class Flashlight : IModSharpModule, IClientListener
     {
         public string DisplayName => "Flashlight";
         public string DisplayAuthor => "DarkerZ[RUS]";
@@ -25,32 +23,23 @@ namespace MS_Flashlight
             _modSharp = sharedSystem.GetModSharp();
             _entityManager = sharedSystem.GetEntityManager();
             _transmits = sharedSystem.GetTransmitManager();
-            _clientmanager = sharedSystem.GetClientManager();
-            _modules = sharedSystem.GetSharpModuleManager();
-
-            var services = new ServiceCollection();
-            services.AddSingleton(sharedSystem);
-            services.AddGameEventManager();
-            _provider = services.BuildServiceProvider();
-            _gameEventManager = _provider.GetRequiredService<IGameEventManager>();
-
+            _clientManager = sharedSystem.GetClientManager();
             _hooks = sharedSystem.GetHookManager();
+            _modules = sharedSystem.GetSharpModuleManager();
             _hotReload = hotReload;
         }
 
         private readonly IModSharp _modSharp;
         public static IEntityManager? _entityManager;
         public static ITransmitManager? _transmits;
-        private readonly IClientManager _clientmanager;
-        private readonly ISharpModuleManager _modules;
-        private readonly IServiceProvider _provider;
-        private readonly IGameEventManager _gameEventManager;
+        private readonly IClientManager _clientManager;
         private readonly IHookManager _hooks;
+        private readonly ISharpModuleManager _modules;
         private readonly bool _hotReload;
 
         private IModSharpModuleInterface<ILocalizerManager>? _localizer;
 
-        static PlayerFlashlight[] g_PF = new PlayerFlashlight[65];
+        static PlayerFlashlight[] g_PF = new PlayerFlashlight[PlayerSlot.MaxPlayerCount];
         static float g_fRainbowProgess = 0.0f;
 
         public bool Init()
@@ -59,7 +48,7 @@ namespace MS_Flashlight
 
             if (_hotReload)
             {
-                foreach (var player in GetControllers().ToArray())
+                foreach (var player in _entityManager!.GetPlayerControllers(true).ToArray())
                 {
                     if (player is { IsValidEntity: true, IsFakeClient: false, IsHltv: false })
                     {
@@ -68,17 +57,14 @@ namespace MS_Flashlight
                     }
                 }
             }
-            
-            _provider.LoadAllSharpExtensions();
-            _gameEventManager.HookEvent("player_connect_full", OnPlayerConnectFull);
-            _gameEventManager.HookEvent("player_disconnect", OnPlayerDisconnect);
-            _gameEventManager.HookEvent("player_spawn", OnPlayerSpawn);
-            _gameEventManager.HookEvent("player_death", OnPlayerDeath);
 
+            _clientManager.InstallClientListener(this);
+            _clientManager.InstallCommandCallback("fl_color", OnChangeColor);
+            _clientManager.InstallCommandCallback("fl_rainbow", OnChangeRainbow);
+
+            _hooks.PlayerSpawnPost.InstallForward(OnPlayerSpawn);
+            _hooks.PlayerKilledPre.InstallForward(OnPlayerKilled);
             _hooks.PlayerRunCommand.InstallHookPost(OnPlayerRunCommandPost);
-
-            _clientmanager.InstallCommandCallback("fl_color", OnChangeColor);
-            _clientmanager.InstallCommandCallback("fl_rainbow", OnChangeRainbow);
 
             return true;
         }
@@ -96,57 +82,50 @@ namespace MS_Flashlight
 
         public void Shutdown()
         {
-            _clientmanager.RemoveCommandCallback("fl_color", OnChangeColor);
-            _clientmanager.RemoveCommandCallback("fl_rainbow", OnChangeRainbow);
+            _clientManager.RemoveClientListener(this);
+            _clientManager.RemoveCommandCallback("fl_color", OnChangeColor);
+            _clientManager.RemoveCommandCallback("fl_rainbow", OnChangeRainbow);
 
+            _hooks.PlayerSpawnPost.RemoveForward(OnPlayerSpawn);
+            _hooks.PlayerKilledPre.RemoveForward(OnPlayerKilled);
             _hooks.PlayerRunCommand.RemoveHookPost(OnPlayerRunCommandPost);
 
             foreach (var pfl in g_PF)
             {
-                var player = pfl.GetPlayer();
-                if (player != null && player.IsValid())
-                {
-                    g_PF[player.PlayerSlot].RemoveFlashlight();
-                }
+                pfl.RemoveFlashlight();
             }
         }
 
-        private HookReturnValue<bool> OnPlayerConnectFull(IGameEvent e, ref bool serverOnly)
+        public void OnClientPutInServer(IGameClient client)
         {
-            if (e.GetPlayerController("userid") is { } player && player is { IsFakeClient: false, IsHltv: false })
+            var player = client.GetPlayerController();
+            if (player != null && player.IsValid())
             {
-                g_PF[player.PlayerSlot].SetPlayer(player);
+                g_PF[client.Slot].SetPlayer(player);
             }
-            return new HookReturnValue<bool>();
         }
 
-        private HookReturnValue<bool> OnPlayerDisconnect(IGameEvent e, ref bool serverOnly)
+        public void OnClientDisconnected(IGameClient client)
         {
-            if (e.GetPlayerController("userid") is { } player && player is { IsFakeClient: false, IsHltv: false })
-            {
-                g_PF[player.PlayerSlot].RemovePlayer();
-            }
-            return new HookReturnValue<bool>();
+            g_PF[client.Slot].RemovePlayer();
         }
 
-        private HookReturnValue<bool> OnPlayerSpawn(IGameEvent e, ref bool serverOnly)
+        private void OnPlayerSpawn(IPlayerSpawnForwardParams @params)
         {
-            if (e.GetPlayerController("userid") is { } player && player is { IsFakeClient: false, IsHltv: false })
+            if (@params.Client is { } client && client is { IsFakeClient: false, IsHltv: false })
             {
-                g_PF[player.PlayerSlot].CanToggle = true;
+                g_PF[client.Slot].CanToggle = true;
             }
-            return new HookReturnValue<bool>();
         }
 
-        private HookReturnValue<bool> OnPlayerDeath(IGameEvent e, ref bool serverOnly)
+        private void OnPlayerKilled(IPlayerKilledForwardParams @params)
         {
-            if (e.GetPlayerController("userid") is { } player && player is { IsFakeClient: false, IsHltv: false })
+            if (@params.Client is { } client && client is { IsFakeClient: false, IsHltv: false })
             {
-                g_PF[player.PlayerSlot].CanToggle = false;
+                g_PF[client.Slot].CanToggle = false;
 
-                g_PF[player.PlayerSlot].RemoveFlashlight();
+                g_PF[client.Slot].RemoveFlashlight();
             }
-            return new HookReturnValue<bool>();
         }
 
         private void OnPlayerRunCommandPost(IPlayerRunCommandHookParams @params, HookReturnValue<EmptyHookReturn> @return)
@@ -167,7 +146,7 @@ namespace MS_Flashlight
 
         private void OnTransmit()
         {
-            foreach (var player in GetControllers().ToArray())
+            foreach (var player in _entityManager!.GetPlayerControllers(true).ToArray())
             {
                 for (int i = 0; i < g_PF.Length; i++)
                 {
@@ -189,15 +168,11 @@ namespace MS_Flashlight
             
             Color32 RainBowColor = Rainbow(g_fRainbowProgess);
 
-            foreach (var pfl in g_PF)
+            foreach(var client in _clientManager.GetGameClients(true))
             {
-                var player = pfl.GetPlayer();
-                if (player != null && player.IsValid() && g_PF[player.PlayerSlot].Rainbow)
+                if (g_PF[client.Slot].Rainbow && g_PF[client.Slot].GetFlashLight() is { } FL)
                 {
-                    if (g_PF[player.PlayerSlot].GetFlashLight() is { } FL)
-                    {
-                        FL.SetNetVar("m_Color", RainBowColor);
-                    }
+                    FL.SetNetVar("m_Color", RainBowColor);
                 }
             }
         }
@@ -266,19 +241,6 @@ namespace MS_Flashlight
             return ECommandAction.Stopped;
         }
 
-        private IEnumerable<IPlayerController> GetControllers()
-        {
-            var max = new PlayerSlot((byte)_modSharp!.GetGlobals().MaxClients);
-
-            for (PlayerSlot slot = 0; slot <= max; slot++)
-            {
-                if (_entityManager!.FindPlayerControllerBySlot(slot) is { } c)
-                {
-                    yield return c;
-                }
-            }
-        }
-
         private static Color32 Rainbow(float progress)
         {
             float div = (Math.Abs(progress % 1) * 6);
@@ -304,5 +266,8 @@ namespace MS_Flashlight
             }
             return _localizer?.Instance;
         }
+
+        int IClientListener.ListenerVersion => IClientListener.ApiVersion;
+        int IClientListener.ListenerPriority => 0;
     }
 }
