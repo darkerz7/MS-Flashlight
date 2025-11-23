@@ -1,0 +1,22 @@
+{
+	"FlashLight_SetColor": {
+		"en-us": "You set the color",
+		"ru-ru": "Установленный цвет"
+	},
+	"FlashLight_You": {
+		"en-us": "You",
+		"ru-ru": "Вы"
+	},
+	"FlashLight_Disabled": {
+		"en-us": "Disabled",
+		"ru-ru": "Отключили"
+	},
+	"FlashLight_Enabled": {
+		"en-us": "Enabled",
+		"ru-ru": "Включили"
+	},
+	"FlashLight_Flashlight": {
+		"en-us": "flashlight",
+		"ru-ru": "у фонарика"
+	}
+}
