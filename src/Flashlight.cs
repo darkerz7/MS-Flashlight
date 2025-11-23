@@ -9,7 +9,6 @@ using Sharp.Shared.Managers;
 using Sharp.Shared.Objects;
 using Sharp.Shared.Types;
 using Sharp.Shared.Units;
-using System.Security.Cryptography;
 
 namespace MS_Flashlight
 {
