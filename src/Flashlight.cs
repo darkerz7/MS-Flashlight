@@ -153,7 +153,7 @@ namespace MS_Flashlight
                     {
                         if (g_PF[i].GetFlashLight() is { } fl)
                         {
-                            _transmits!.SetEntityState(fl.Index, player.Index, true, -1);
+                            _transmits!.SetEntityState(fl.Index, player.Index, false, -1);
                         }
                     }
                 }
