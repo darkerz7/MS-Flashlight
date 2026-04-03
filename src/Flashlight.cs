@@ -197,9 +197,9 @@ namespace MS_Flashlight
                 }
                 if (GetLocalizer() is { } lm)
                 {
-                    var localizer = lm.GetLocalizer(client);
-                    if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Format("FlashLight_SetColor")} {ChatColor.Red}{iRed} {ChatColor.Green}{iGreen} {ChatColor.DarkBlue}{iBlue}");
-                    else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Format("FlashLight_SetColor")} {iRed} {iGreen} {iBlue}");
+                    var localizer = lm.For(client);
+                    if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Text("FlashLight_SetColor")} {ChatColor.Red}{iRed} {ChatColor.Green}{iGreen} {ChatColor.DarkBlue}{iBlue}");
+                    else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Text("FlashLight_SetColor")} {iRed} {iGreen} {iBlue}");
                 }
             }
 
@@ -220,9 +220,9 @@ namespace MS_Flashlight
                     }
                     if (GetLocalizer() is { } lm)
                     {
-                        var localizer = lm.GetLocalizer(client);
-                        if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Format("FlashLight_You")} {ChatColor.Red}{localizer.Format("FlashLight_Disabled")} {ChatColor.Red}r{ChatColor.Gold}a{ChatColor.Yellow}i{ChatColor.Green}n{ChatColor.Blue}b{ChatColor.DarkBlue}o{ChatColor.Purple}w {ChatColor.White}{localizer.Format("FlashLight_Flashlight")}");
-                        else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Format("FlashLight_You")} {localizer.Format("FlashLight_Disabled")} rainbow {localizer.Format("FlashLight_Flashlight")}");
+                        var localizer = lm.For(client);
+                        if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Text("FlashLight_You")} {ChatColor.Red}{localizer.Text("FlashLight_Disabled")} {ChatColor.Red}r{ChatColor.Gold}a{ChatColor.Yellow}i{ChatColor.Green}n{ChatColor.Blue}b{ChatColor.DarkBlue}o{ChatColor.Purple}w {ChatColor.White}{localizer.Text("FlashLight_Flashlight")}");
+                        else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Text("FlashLight_You")} {localizer.Text("FlashLight_Disabled")} rainbow {localizer.Text("FlashLight_Flashlight")}");
                     }  
                 }
                 else
@@ -230,9 +230,9 @@ namespace MS_Flashlight
                     g_PF[player.PlayerSlot].Rainbow = true;
                     if (GetLocalizer() is { } lm)
                     {
-                        var localizer = lm.GetLocalizer(client);
-                        if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Format("FlashLight_You")} {ChatColor.Green}{localizer.Format("FlashLight_Enabled")} {ChatColor.Red}r{ChatColor.Gold}a{ChatColor.Yellow}i{ChatColor.Green}n{ChatColor.Blue}b{ChatColor.DarkBlue}o{ChatColor.Purple}w {ChatColor.White}{localizer.Format("FlashLight_Flashlight")}");
-                        else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Format("FlashLight_You")} {localizer.Format("FlashLight_Enabled")} rainbow {localizer.Format("FlashLight_Flashlight")}");
+                        var localizer = lm.For(client);
+                        if (command.ChatTrigger) player.Print(HudPrintChannel.Chat, $" {ChatColor.Blue}[{ChatColor.Green}Flashlight{ChatColor.Blue}] {ChatColor.White}{localizer.Text("FlashLight_You")} {ChatColor.Green}{localizer.Text("FlashLight_Enabled")} {ChatColor.Red}r{ChatColor.Gold}a{ChatColor.Yellow}i{ChatColor.Green}n{ChatColor.Blue}b{ChatColor.DarkBlue}o{ChatColor.Purple}w {ChatColor.White}{localizer.Text("FlashLight_Flashlight")}");
+                        else player.Print(HudPrintChannel.Console, $"[Flashlight] {localizer.Text("FlashLight_You")} {localizer.Text("FlashLight_Enabled")} rainbow {localizer.Text("FlashLight_Flashlight")}");
                     }
                 }
             }
